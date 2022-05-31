@@ -38,15 +38,15 @@ def getnumbers(grid: list) -> list:
     for rowno, row in enumerate(grid):
         for colno, cell in enumerate(row):
             if cell != 'X':
-                # Gets the values of the neighbors
+                # obtiene los valores de los vecinos
                 values = [grid[r][c] for r, c in getneighbors(grid, rowno, colno)]
 
-                # Counts how many are mines
+                # cuenta cuantas son minas
                 grid[rowno][colno] = str(values.count('X'))
 
     return grid
 
-def getneighbors(grid, rowno, colno):
+def getneighbors(grid: list, rowno: int, colno: int) -> list:
     gridsize = len(grid)
     neighbors = []
 
