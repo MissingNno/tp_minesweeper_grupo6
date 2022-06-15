@@ -1,34 +1,34 @@
 import random
 import os
 
-def minesweeper_initial_board(board_size: int, total_mines: int) -> tuple:
+def generate_board(board_size: int, total_mines: int) -> tuple:
     '''inicializa la grilla de juego con "0" en todas las celdas. Se eligen de manera aleatoria
     las casillas que poseen una bomba y se añaden a la grilla con el valor "X".'''
 
     empty_board = [['0' for column in range(board_size)] for row in range(board_size)]
-    mines = generate_mines(empty_board, total_mines)
+    mines = generate_mines(board_size, total_mines)
     for row, col in mines:
         empty_board[row][col] = 'X'
-    return (empty_board, mines)
+    final_board = get_numbers(empty_board)
+    return (final_board, mines)
 
-def generate_mines(empty_board: list, total_mines: int) -> list:
+def generate_mines(board_size: int, total_mines: int) -> list:
     '''Genera una lista con posiciones aleatorias para las bombas.'''
     
     mines = []
     for mine in range(total_mines):
-        cell = obtain_random_cell(empty_board)
+        cell = obtain_random_cell(board_size)
         while cell in mines:
-            cell = obtain_random_cell(empty_board)
+            cell = obtain_random_cell(board_size)
         mines.append(cell)
     return mines
 
-def obtain_random_cell(board: list) -> tuple:
-    board_size = len(board)
+def obtain_random_cell(board_size: int) -> tuple:
     row = random.randint(0, board_size - 1)
     col = random.randint(0, board_size - 1)
     return (row, col)
 
-def getnumbers(board: list) -> list:
+def get_numbers(board: list) -> list:
     for row_number, row in enumerate(board):
         for col_number, cell in enumerate(row):
             if cell != 'X': 
@@ -59,13 +59,14 @@ def show_board(board: list, letters: list) -> None:
         print(row + '\n' + line_h)
     print('')
 
-board_size = 7
-total_mines = 10
+board_size = 10
+total_mines = 20
 letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q',
 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
 
+get_board, get_mines = generate_board(board_size,total_mines)
 last_board = [[' ' for i in range(board_size)] for i in range(board_size)]
 board = []
 flags = []
 
-show_board(last_board,letters)
+show_board(get_board,letters)
