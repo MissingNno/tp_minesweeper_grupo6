@@ -55,8 +55,8 @@ def obtain_neighbors(board: list, row_number: int, col_number: int) -> list:
 
 
 def show_board(board: list) -> None:
-    letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q',
-               'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
+    letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+
     board_size = len(board)
     top = '    '
     line_h = '    ' + (4 * board_size * '-') + '-'
@@ -72,6 +72,7 @@ def show_board(board: list) -> None:
 
 
 def save_game(board, user_name='user'):
+    '''Guarda cada tablero como un registro.'''
     try:
         arch = open(f'{user_name}.txt', 'wt')
 
@@ -89,15 +90,23 @@ def save_game(board, user_name='user'):
 
 def recover_game(user_name, game_number):
     try:
-        arch = open(f'{user_name}.txt', 'wt')
+        arch = open(f'{user_name}.txt', 'rt')
+        saved_board = arch.readline()
+        board_counter = 1
 
-        stringyfied_board = ";".join([(str(row)) for row in board])
-        arch.write(stringyfied_board + "\n")
+        while saved_board and board_counter != game_number:
+            board_counter += 1
+
+        assert saved_board
+        new_board = list([list(row) for row in saved_board])
+        return new_board
 
     except FileNotFoundError as msg:
         print('No se pudo abrir el archivo', msg)
     except OSError as msg:
-        print('No se pudo grabar el archivo', msg)
+        print('No se pudo leer el archivo', msg)
+    except AssertionError:
+        print(f'No existe el juego número {game_number} en nuestros registros')
     finally:
         try:
             arch.close()
@@ -112,7 +121,6 @@ def check_for_bombs(user_input, board):
         print(
             f"Perdiste el juego, la casilla fila: {row}, columna: {col} tenía una bomba \U0001F615 \n")
         show_board(board)
-        # save_game(board)
     else:
         print('seguimos')
         # funcion de facu que revela casillas
@@ -127,7 +135,6 @@ board, mines = generate_board(board_size, total_mines)
 last_board = [[' ' for i in range(board_size)] for i in range(board_size)]
 
 user_input = [0, 1]
-user_bomb = [0, 2]
+
 
 check_for_bombs(user_input, board)
-save_game(board)
