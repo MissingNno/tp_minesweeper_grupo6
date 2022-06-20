@@ -1,5 +1,7 @@
-from os import PRIO_PGRP
 import random
+# pasar letters por param
+# mabiar nombre get_board y get_mines
+# quitar tablero harcodeado
 
 
 def generate_board(board_size: int, total_mines: int) -> tuple:
@@ -80,13 +82,13 @@ def show_board(board: list) -> None:
     print('')
 
 
-def save_game(board, user_name='user'):
+def save_game(current_board, mines_board, mines, flags, user_name='user'):
     '''Guarda cada tablero como un registro.'''
     try:
         arch = open(f'{user_name}.txt', 'wt')
-
-        stringyfied_board = ";".join([(str(row)) for row in board])
-        arch.write(stringyfied_board + "\n")
+        register = str(current_board) + ";" + \
+            str(mines_board) + ';' + str(mines) + ';' + str(flags)
+        arch.write(register + "\n")
 
     except OSError as msg:
         print('No se pudo grabar el archivo', msg)
@@ -97,30 +99,56 @@ def save_game(board, user_name='user'):
             pass
 
 
-def recover_game(user_name, game_number):
+test_board = [['2', 'X', 'X', '1', '0', '1', 'X', '2', '0', '1'],
+              ['3', '0', '5', '3', '1', '2', '2', '3', '2', '1'],
+              ['2', '0', '0', '2', '0', '2', '3', '0', '2', '0'],
+              ['1', '3', '3', '4', '2', '4', '0', '0', '2', '0'],
+              ['0', '1', '0', '2', '0', '3', '0', '4', '2', '0'],
+              ['0', '1', '1', '2', '1', '2', '2', '0', '1', '0'],
+              ['0', '0', '0', '0', '1', '2', '3', '3', '2', '1'],
+              ['0', '0', '0', '0', '1', '0', '0', '3', '0', '2'],
+              ['0', '0', '0', '0', '1', '2', '3', '4', '0', '2'],
+              ['0', '0', '0', '0', '0', '0', '1', '0', '2', '1']
+              ]
+save_game(test_board, test_board, [], [], 'juan')
+
+
+def recover_game(user_name='user'):
     try:
         arch = open(f'{user_name}.txt', 'rt')
-        saved_board = arch.readline()
-        board_counter = 1
+        game_data = arch.readline()
 
-        while saved_board and board_counter != game_number:
-            board_counter += 1
+        assert game_data
+        splitted_game_data = game_data.split(';')
+        splitted_game_data[-1] = splitted_game_data[-1].rstrip("\n")
+        current_board, board_with_mines, mines, flags = splitted_game_data
 
-        assert saved_board
-        new_board = list([list(row) for row in saved_board])
-        return new_board
+        print('aa', current_board)
+
+        def convert_to_list(row):
+            # print('row', row)
+            return list(filter(str.isalnum, row))
+
+        new_board = list(map(convert_to_list, current_board))
+        new_board_with_mines = list(map(convert_to_list, board_with_mines))
+        # print('nb', new_board)
+
+        return (new_board, new_board_with_mines, mines, flags)
 
     except FileNotFoundError as msg:
         print('No se pudo abrir el archivo', msg)
     except OSError as msg:
         print('No se pudo leer el archivo', msg)
     except AssertionError:
-        print(f'No existe el juego número {game_number} en nuestros registros')
+        print('No existen juegos guardados en nuestros registros')
     finally:
         try:
             arch.close()
         except NameError:
             pass
+
+
+recover_game('juan')
 
 
 def check_for_bombs(user_input, board, mines):
@@ -148,17 +176,25 @@ def reveal_cells(full_board, current_board, row, col):
 def validate_input(data, board_size):
     cell = ()
     flag = False
-    if len(data) > 1 and len(data) <= 4:
-        if data[0].upper() in letters[:board_size]:
-            if data[1].isnumeric() and 0 < int(data[1]) <= board_size:
-                cell = (int(data[1])-1, int(letters.index(data[0].upper())))
-                if len(data) == 4:
-                    print('entra')
-                    cell = (int(data[1] + data[2])-1,
-                            int(letters.index(data[0].upper())))
-                if data[-1] == 'f':
-                    flag = True
+    last_char = data[-1].upper()
+    first_char = data[0]
+    row_number = ""
 
+    try:
+        assert first_char.isalpha() and (
+            first_char.upper() in letters[:board_size])
+        if len(data) > 1 and len(data) < 5:
+            if last_char == "F":
+                row_number = data[1:-1]
+                flag = True
+            else:
+                row_number = data[1:]
+            assert int(row_number) >= 1 and int(row_number) <= board_size
+        else:
+            raise ValueError
+        cell = (int(row_number)-1, int(letters.index(first_char.upper())))
+    except (ValueError, AssertionError):
+        print("Casilla inválida.")
     return {"cell": cell, "flag": flag}
 
 
@@ -188,9 +224,7 @@ while True:
     if cell:
         print('\n\n')
         row, col = cell
-        print('cell', cell)
         selected_cell = last_board[row][col]
-        print('seleted', selected_cell)
         flag = result['flag']
         can_be_flagged = selected_cell == ' ' or selected_cell == 'F'
 
