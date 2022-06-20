@@ -86,8 +86,11 @@ def save_game(current_board, mines_board, mines, flags, user_name='user'):
     '''Guarda cada tablero como un registro.'''
     try:
         arch = open(f'{user_name}.txt', 'wt')
-        register = str(current_board) + ";" + \
-            str(mines_board) + ';' + str(mines) + ';' + str(flags)
+        stringyfied_board = "-".join([(str(row)) for row in current_board])
+        stringyfied_mines_board = "-".join([(str(row)) for row in mines_board])
+
+        register = stringyfied_board + ";" + \
+            stringyfied_mines_board + ';' + str(mines) + ';' + str(flags)
         arch.write(register + "\n")
 
     except OSError as msg:
@@ -97,20 +100,6 @@ def save_game(current_board, mines_board, mines, flags, user_name='user'):
             arch.close()
         except NameError:
             pass
-
-
-test_board = [['2', 'X', 'X', '1', '0', '1', 'X', '2', '0', '1'],
-              ['3', '0', '5', '3', '1', '2', '2', '3', '2', '1'],
-              ['2', '0', '0', '2', '0', '2', '3', '0', '2', '0'],
-              ['1', '3', '3', '4', '2', '4', '0', '0', '2', '0'],
-              ['0', '1', '0', '2', '0', '3', '0', '4', '2', '0'],
-              ['0', '1', '1', '2', '1', '2', '2', '0', '1', '0'],
-              ['0', '0', '0', '0', '1', '2', '3', '3', '2', '1'],
-              ['0', '0', '0', '0', '1', '0', '0', '3', '0', '2'],
-              ['0', '0', '0', '0', '1', '2', '3', '4', '0', '2'],
-              ['0', '0', '0', '0', '0', '0', '1', '0', '2', '1']
-              ]
-save_game(test_board, test_board, [], [], 'juan')
 
 
 def recover_game(user_name='user'):
@@ -123,15 +112,12 @@ def recover_game(user_name='user'):
         splitted_game_data[-1] = splitted_game_data[-1].rstrip("\n")
         current_board, board_with_mines, mines, flags = splitted_game_data
 
-        print('aa', current_board)
-
         def convert_to_list(row):
-            # print('row', row)
             return list(filter(str.isalnum, row))
 
-        new_board = list(map(convert_to_list, current_board))
-        new_board_with_mines = list(map(convert_to_list, board_with_mines))
-        # print('nb', new_board)
+        new_board = list(map(convert_to_list, current_board.split('-')))
+        new_board_with_mines = list(
+            map(convert_to_list, board_with_mines.split('-')))
 
         return (new_board, new_board_with_mines, mines, flags)
 
@@ -146,9 +132,6 @@ def recover_game(user_name='user'):
             arch.close()
         except NameError:
             pass
-
-
-recover_game('juan')
 
 
 def check_for_bombs(user_input, board, mines):
