@@ -141,7 +141,6 @@ while True:
             if set(flags) == set(get_mines):
                 print(
                     'Ganaste!'
-                    #'It took you {} minutes and {} seconds.\n'.format(minutes,seconds)
                     )
                 show_board(get_board,letters)
                 #if playagain():
