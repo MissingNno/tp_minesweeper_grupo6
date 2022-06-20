@@ -1,5 +1,5 @@
+from os import PRIO_PGRP
 import random
-import os
 
 
 def generate_board(board_size: int, total_mines: int) -> tuple:
@@ -8,10 +8,21 @@ def generate_board(board_size: int, total_mines: int) -> tuple:
 
     empty_board = [['0' for column in range(
         board_size)] for row in range(board_size)]
-    mines = generate_mines(board_size, total_mines)
+    mines = [(0, 1), (0, 2), (0, 6)]
     for row, col in mines:
         empty_board[row][col] = 'X'
-    final_board = get_numbers(empty_board)
+    final_board = [['2', 'X', 'X', '1', '0', '1', 'X', '2', '0', '1'],
+                   ['3', '0', '5', '3', '1', '2', '2', '3', '2', '1'],
+                   ['2', '0', '0', '2', '0', '2', '3', '0', '2', '0'],
+                   ['1', '3', '3', '4', '2', '4', '0', '0', '2', '0'],
+                   ['0', '1', '0', '2', '0', '3', '0', '4', '2', '0'],
+                   ['0', '1', '1', '2', '1', '2', '2', '0', '1', '0'],
+                   ['0', '0', '0', '0', '1', '2', '3', '3', '2', '1'],
+                   ['0', '0', '0', '0', '1', '0', '0', '3', '0', '2'],
+                   ['0', '0', '0', '0', '1', '2', '3', '4', '0', '2'],
+                   ['0', '0', '0', '0', '0', '0', '1', '0', '2', '1']
+                   ]
+
     return (final_board, mines)
 
 
@@ -55,8 +66,6 @@ def obtain_neighbors(board: list, row_number: int, col_number: int) -> list:
 
 
 def show_board(board: list) -> None:
-    letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-
     board_size = len(board)
     top = '    '
     line_h = '    ' + (4 * board_size * '-') + '-'
@@ -114,27 +123,111 @@ def recover_game(user_name, game_number):
             pass
 
 
-def check_for_bombs(user_input, board):
+def check_for_bombs(user_input, board, mines):
     row, col = user_input
-    print(board)
-    if board[row][col] == 'X':
+    game_lost = False
+
+    if user_input in mines:
         print(
             f"Perdiste el juego, la casilla fila: {row}, columna: {col} tenía una bomba \U0001F615 \n")
         show_board(board)
-    else:
-        print('seguimos')
-        # funcion de facu que revela casillas
+        game_lost = True
+    return game_lost
 
 
-# Programa principal
+def reveal_cells(full_board, current_board, row, col):
+    if current_board[row][col] != ' ':
+        return
+    current_board[row][col] = full_board[row][col]
+    if full_board[row][col] == '0':
+        for f, c in obtain_neighbors(full_board, row, col):
+            if current_board[f][c] != 'F':
+                reveal_cells(full_board, current_board, f, c)
+
+
+def validate_input(data, board_size):
+    cell = ()
+    flag = False
+    if len(data) > 1 and len(data) <= 4:
+        if data[0].upper() in letters[:board_size]:
+            if data[1].isnumeric() and 0 < int(data[1]) <= board_size:
+                cell = (int(data[1])-1, int(letters.index(data[0].upper())))
+                if len(data) == 4:
+                    print('entra')
+                    cell = (int(data[1] + data[2])-1,
+                            int(letters.index(data[0].upper())))
+                if data[-1] == 'f':
+                    flag = True
+
+    return {"cell": cell, "flag": flag}
+
+
 board_size = 10
 total_mines = 20
+get_board, get_mines = generate_board(board_size, total_mines)
+flags = []
+letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
-
-board, mines = generate_board(board_size, total_mines)
 last_board = [[' ' for i in range(board_size)] for i in range(board_size)]
 
-user_input = [0, 1]
+print()
+print("Buscaminas - Juego Realizado por Grupo 11".center(100, "*"), end="\n\n")
+show_board(last_board)
+message = "Instrucciones:\n" + \
+    "> Escriba la columna y luego la fila (ej. c4).\n" + \
+    "> Para colocar o quitar una bandera, agrege 'f' a la celda (ej. a5f)."
+print(message)
 
+while True:
+    mines_left = total_mines - len(flags)
+    data = input('Ingresar Celda ({} minas restantes): '.format(mines_left))
+    result = validate_input(data, board_size)
 
-check_for_bombs(user_input, board)
+    cell = result['cell']
+
+    if cell:
+        print('\n\n')
+        row, col = cell
+        print('cell', cell)
+        selected_cell = last_board[row][col]
+        print('seleted', selected_cell)
+        flag = result['flag']
+        can_be_flagged = selected_cell == ' ' or selected_cell == 'F'
+
+        if flag:
+            if can_be_flagged:
+                if cell in flags:
+                    remove = input(
+                        'Ya existe una bandera en esa casilla, ingrese "si" para quitarla: ')
+                    if remove == 'si':
+                        last_board[row][col] = ' '
+                        flags.remove(cell)
+
+                else:
+                    last_board[row][col] = 'F'
+                    # unicode for flag \U0001F6A9
+                    flags.append(cell)
+
+            else:
+                print('No se puede poner una bandera porque la casilla ya fue revelada.')
+                continue
+        elif cell in flags:
+            print('No se puede revelar esta casilla porque tiene una bandera')
+            continue
+        elif check_for_bombs(cell, get_board, get_mines):
+            break
+        else:
+            reveal_cells(get_board, last_board, row, col)
+
+        if set(flags) == set(get_mines):
+            print(
+                'Ganaste!'
+            )
+            show_board(get_board)
+            break
+            # if playagain():
+            # playgame()
+            # return
+
+    show_board(last_board)
+    print(message)
