@@ -71,17 +71,48 @@ def show_board(board: list) -> None:
     print('')
 
 
-def end_game():
-    print('aa')
+def save_game(board, user_name='user'):
+    try:
+        arch = open(f'{user_name}.txt', 'wt')
+
+        stringyfied_board = ";".join([(str(row)) for row in board])
+        arch.write(stringyfied_board + "\n")
+
+    except OSError as msg:
+        print('No se pudo grabar el archivo', msg)
+    finally:
+        try:
+            arch.close()
+        except NameError:
+            pass
 
 
-def checkForBombs(user_input, board):
+def recover_game(user_name, game_number):
+    try:
+        arch = open(f'{user_name}.txt', 'wt')
+
+        stringyfied_board = ";".join([(str(row)) for row in board])
+        arch.write(stringyfied_board + "\n")
+
+    except FileNotFoundError as msg:
+        print('No se pudo abrir el archivo', msg)
+    except OSError as msg:
+        print('No se pudo grabar el archivo', msg)
+    finally:
+        try:
+            arch.close()
+        except NameError:
+            pass
+
+
+def check_for_bombs(user_input, board):
     row, col = user_input
+    print(board)
     if board[row][col] == 'X':
         print(
             f"Perdiste el juego, la casilla fila: {row}, columna: {col} tenía una bomba \U0001F615 \n")
         show_board(board)
-        end_game()
+        # save_game(board)
     else:
         print('seguimos')
         # funcion de facu que revela casillas
@@ -98,4 +129,5 @@ last_board = [[' ' for i in range(board_size)] for i in range(board_size)]
 user_input = [0, 1]
 user_bomb = [0, 2]
 
-checkForBombs(user_input, board)
+check_for_bombs(user_input, board)
+save_game(board)
